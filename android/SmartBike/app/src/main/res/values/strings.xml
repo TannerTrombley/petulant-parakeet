@@ -3,4 +3,6 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="map_button_text">Start with Map</string>
+    <string name="title_activity_map">MapActivity</string>
 </resources>
