@@ -14,6 +14,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -395,6 +398,7 @@ public class BluetoothChatService {
                 try {
                     mmSocket.close();
                 } catch (IOException e2) {
+
                 }
                 connectionFailed();
                 return;
@@ -483,6 +487,8 @@ public class BluetoothChatService {
         public void cancel() {
             try {
                 mmSocket.close();
+                mmInStream.close();
+                mmOutStream.close();
             } catch (IOException e) {
             }
         }
