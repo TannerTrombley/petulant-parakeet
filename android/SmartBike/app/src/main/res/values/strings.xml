@@ -20,4 +20,6 @@
     <string name="title_other_devices">Other Devices</string>
     <string name="button_scan">Scan</string>
     <string name="title_activity_device_list">DeviceListActivity</string>
+    <string name="find_device">Find Device</string>
+
 </resources>

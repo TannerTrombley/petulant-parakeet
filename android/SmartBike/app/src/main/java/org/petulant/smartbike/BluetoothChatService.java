@@ -390,6 +390,7 @@ public class BluetoothChatService {
                 // successful connection or an exception
                 mmSocket.connect();
             } catch (IOException e) {
+                Log.e(TAG, "Connect failed", e);
                 // Close the socket
                 try {
                     mmSocket.close();
