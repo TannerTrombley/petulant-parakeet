@@ -1,12 +1,11 @@
 
-#include <ArduinoJson.h>
 #include <Wire.h>
 #include <LIDARLite.h>
 #include <SoftwareSerial.h>
 
 //CONSTANTS
-short CONSECUTIVE_READINGS = 5;
-//short DANGER_THRESHOLD = 3; // m/s
+short CONSECUTIVE_READINGS = 3;
+short DANGER_THRESHOLD = 50; // cm/s
 
 LIDARLite lidar;
 
@@ -26,10 +25,10 @@ LIDARLite lidar;
 //Need a certain number of consecutive negative readings to be considered safe
 bool confirmSafety()
 {
-   for (int i = 0; i < CONSECUTIVE_READINGS; ++i)
+   for (int i = 0; i < 5*CONSECUTIVE_READINGS; ++i)
    {
     //check if not safe
-    if (lidar.velocity() > 0)
+    if (lidar.velocity()*10 > DANGER_THRESHOLD)
       return true;
    }
    //if we get here it is safe, return false
@@ -47,9 +46,9 @@ bool confirmDanger(float &avg)
    for (int i = 0; i < CONSECUTIVE_READINGS; ++i)
    {
     //check if safe
-    int reading = lidar.velocity();
+    int reading = lidar.velocity()*10;
     total += reading;
-    if (reading <= 0)
+    if (reading <= DANGER_THRESHOLD)
       return false;
    }
    //if we get here there is danger, return true
@@ -58,24 +57,27 @@ bool confirmDanger(float &avg)
    return true;
 }
 
+//Sends estimated time until the vehicle reaches the bike
 void sendDangerMessage(float velocity, float distance)
 {
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-
-  root["status"] = "danger";
-  root["velocity"] = velocity;
-  root["distance"] = distance;
-  root.printTo(Serial);
+//  StaticJsonBuffer<200> jsonBuffer;
+//  JsonObject& root = jsonBuffer.createObject();
+//
+//  root["status"] = "danger";
+//  root["velocity"] = velocity;
+//  root["distance"] = distance;
+//  root.prettyPrintTo(Serial);
+  //velocity should already be pos, but just in case
+  if (velocity < 0)
+    velocity *= -1;
+  if (velocity == 0)
+    return;
+  Serial.println((distance)/velocity);
 }
 
 void sendSafeMessage()
 {
-  StaticJsonBuffer<200> jsonBuffer;
-  JsonObject& root = jsonBuffer.createObject();
-
-  root["status"] = "safe";
-  root.printTo(Serial);
+  Serial.println(-1);
 }
 
 
@@ -83,7 +85,7 @@ void setup()
 {
 
   lidar.begin();
-  //velocity scaling to m/s
+  //velocity scaling to 1m/s
   lidar.scale(4);
   Serial.begin(9600);
 }
@@ -101,14 +103,14 @@ void loop()
 {
   float avgVel;
   bool prevState = inDanger;
-  int current = lidar.velocity();
+  int current = lidar.velocity()*10;
+  //Serial.println(current);
   if (inDanger && current < 0)
     inDanger = confirmSafety();
-  else if (!inDanger && current >= 0)
+  else if (!inDanger && current >= DANGER_THRESHOLD)
     inDanger = confirmDanger(avgVel);
   //No other scenrio should cause a change in state
 
-  //TODO send something based on the current  vs prevState
   if (prevState != inDanger)
   {
     if (inDanger)
@@ -123,5 +125,15 @@ void loop()
       sendSafeMessage();
     }
   } 
+  else if (prevState == true && inDanger == true)
+  {
+    float totalDist = 0, totalVel = 0;;
+    for(int i = 0; i < 5; ++i)
+    {
+      totalVel += lidar.velocity() * 10;
+      totalDist += lidar.distance();
+    }
+    sendDangerMessage(totalVel/5, totalDist/5);
+  }
 }
 
