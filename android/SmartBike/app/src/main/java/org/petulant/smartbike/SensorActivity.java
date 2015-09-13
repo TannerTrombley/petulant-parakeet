@@ -22,8 +22,6 @@ import java.util.UUID;
 
 public class SensorActivity extends AppCompatActivity {
 
-    TextView myLabel;
-    EditText myTextbox;
     BluetoothAdapter mBluetoothAdapter;
     BluetoothSocket mmSocket;
     BluetoothDevice mmDevice;
@@ -40,60 +38,37 @@ public class SensorActivity extends AppCompatActivity {
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensor);
-
-        Button openButton = (Button)findViewById(R.id.open);
-        Button sendButton = (Button)findViewById(R.id.send);
-        Button closeButton = (Button)findViewById(R.id.close);
-        myLabel = (TextView)findViewById(R.id.label);
-        myTextbox = (EditText)findViewById(R.id.entry);
-
-        //Open Button
-        openButton.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    findBT();
-                    openBT();
-                }
-                catch (IOException ex) { }
-            }
-        });
-
-        //Send Button
-        sendButton.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    sendData();
-                }
-                catch (IOException ex) { }
-            }
-        });
-
-        //Close button
-        closeButton.setOnClickListener(new View.OnClickListener()
-        {
-            public void onClick(View v)
-            {
-                try
-                {
-                    closeBT();
-                }
-                catch (IOException ex) { }
-            }
-        });
     }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        try
+        {
+            findBT();
+            openBT();
+        }
+        catch (IOException ex) { }
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        try
+        {
+            closeBT();
+        }
+        catch (IOException ex) { }
+    }
+
+
+
 
     void findBT()
     {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if(mBluetoothAdapter == null)
         {
-            myLabel.setText("No bluetooth adapter available");
         }
 
         if(!mBluetoothAdapter.isEnabled())
@@ -114,8 +89,10 @@ public class SensorActivity extends AppCompatActivity {
                 }
             }
         }
-        myLabel.setText("Bluetooth Device Found");
     }
+
+
+
 
     void openBT() throws IOException
     {
@@ -127,8 +104,10 @@ public class SensorActivity extends AppCompatActivity {
 
         beginListenForData();
 
-        myLabel.setText("Bluetooth Opened");
     }
+
+
+
 
     void beginListenForData()
     {
@@ -165,7 +144,6 @@ public class SensorActivity extends AppCompatActivity {
                                     {
                                         public void run()
                                         {
-                                            myLabel.setText(data);
                                         }
                                     });
                                 }
@@ -187,13 +165,19 @@ public class SensorActivity extends AppCompatActivity {
         workerThread.start();
     }
 
+
+
+
+
     void sendData() throws IOException
     {
-        String msg = myTextbox.getText().toString();
-        msg += "\n";
+        String msg = "";
         mmOutputStream.write(msg.getBytes());
-        myLabel.setText("Data Sent");
     }
+
+
+
+
 
     void closeBT() throws IOException
     {
@@ -201,6 +185,5 @@ public class SensorActivity extends AppCompatActivity {
         mmOutputStream.close();
         mmInputStream.close();
         mmSocket.close();
-        myLabel.setText("Bluetooth Closed");
     }
 }
