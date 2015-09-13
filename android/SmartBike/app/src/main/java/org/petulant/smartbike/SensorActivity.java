@@ -11,6 +11,11 @@ import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
@@ -41,7 +46,7 @@ public class SensorActivity extends AppCompatActivity {
         String value = "";
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            value = extras.getString("new_variable_name");
+            value = extras.getString("directions");
         }
 
         circleImage = (ImageView)findViewById(R.id.circle_image);
@@ -53,7 +58,11 @@ public class SensorActivity extends AppCompatActivity {
 
     }
 
-    private void startNav(String json){
+    private void startNav(String value) throws Exception{
+        JSONObject json = (JSONObject) new JSONParser().parse(value);
+        JSONObject route = (JSONObject) json.get("routes");
+        JSONObject legs = (JSONObject) json.get("legs");
+        JSONArray steps = (JSONArray) json.get("steps");
         //check that there is a path
         //store turns and distances
         //start timerTask
