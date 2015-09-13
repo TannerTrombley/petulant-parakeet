@@ -29,6 +29,8 @@ public class SensorActivity extends AppCompatActivity {
     byte[] readBuffer;
     int readBufferPosition;
     volatile boolean stopWorker;
+    int[] directions;
+    int[] distances;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -36,9 +38,25 @@ public class SensorActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensor);
 
+        String value = "";
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            value = extras.getString("new_variable_name");
+        }
+
         circleImage = (ImageView)findViewById(R.id.circle_image);
         arrowImage = (ImageView)findViewById(R.id.arrow_image);
         time = (TextView)findViewById(R.id.time);
+
+        if (value != "")
+            startNav(value);
+
+    }
+
+    private void startNav(String json){
+        //check that there is a path
+        //store turns and distances
+        //start timerTask
 
     }
 
