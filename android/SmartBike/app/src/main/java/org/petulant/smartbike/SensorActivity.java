@@ -53,8 +53,9 @@ public class SensorActivity extends AppCompatActivity {
         arrowImage = (ImageView)findViewById(R.id.arrow_image);
         time = (TextView)findViewById(R.id.time);
 
-        if (value != "")
+        if (value != "") {
             startNav(value);
+        }
 
     }
 
@@ -174,20 +175,18 @@ public class SensorActivity extends AppCompatActivity {
                                     {
                                         public void run()
                                         {
-                                            /*
+
                                             if (Integer.parseInt(data) >= 0 ){
-                                                if (circleImage.getDrawable() == WARNING) {
-                                                    //circleImage.setImageDrawable(WARNING);
+                                                if (circleImage.getDrawable() == getDrawable(R.drawable.circlecaution)) {
+                                                    circleImage.setImageDrawable(getDrawable(R.drawable.circlecaution));
                                                 }
-                                                //time.setText("Estimated Time: " + data);
+                                                time.setText("Estimated Time: " + data);
                                             }
 
                                             else if (Integer.parseInt(data) == -1){
-                                                circleImage.setImageDrawable(SAFE);
+                                                circleImage.setImageDrawable(getDrawable(R.drawable.circlesafe));
                                                 time.setText("");
                                             }
-                                            */
-                                            time.setText("Estimated Time: " + data);
                                         }
                                     });
                                 }
