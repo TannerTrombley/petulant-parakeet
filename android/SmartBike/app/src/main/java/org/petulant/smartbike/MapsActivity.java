@@ -122,7 +122,6 @@ public class MapsActivity extends FragmentActivity {
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
         String url ="https://maps.googleapis.com/maps/api/directions/json?origin="+CrntLctn.latitude+","+CrntLctn.longitude+"&destination="+Destination.latitude+","+Destination.longitude+"&mode=bicycling&key=AIzaSyCnf3zwTQ1-PEElMQgKdUGJ14OqJpyHq3Q";
-        Log.i("url", url);
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
@@ -130,7 +129,6 @@ public class MapsActivity extends FragmentActivity {
                     public void onResponse(String response) {
                         // Display the first 500 characters of the response string.
                         resp = response;
-                        Log.i("name", resp);
                         Intent intent = new Intent(getBaseContext(), SensorActivity.class);
                         intent.putExtra("DIRECTIONS", resp);
                         startActivity(intent);

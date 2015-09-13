@@ -1,9 +1,14 @@
 package org.petulant.smartbike;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationManager;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -12,20 +17,22 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
-public class SensorActivity extends AppCompatActivity {
+public class SensorActivity extends Activity {
 
     ImageView circleImage;
     ImageView arrowImage;
     TextView time;
+    TextView distanceText;
     BluetoothAdapter mBluetoothAdapter;
     BluetoothSocket mmSocket;
     BluetoothDevice mmDevice;
@@ -36,6 +43,14 @@ public class SensorActivity extends AppCompatActivity {
     volatile boolean stopWorker;
     int[] directions;
     int[] distances;
+    int LEFT = 0;
+    int RIGHT = 1;
+    double longitude;
+    double latitude;
+    LocationManager lm;
+    int distTraveled = 0;
+    int currentStep = 0;
+    Timer timer;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -46,28 +61,93 @@ public class SensorActivity extends AppCompatActivity {
         String value = "";
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            value = extras.getString("directions");
+            value = extras.getString("DIRECTIONS");
+
+            lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            String locationProvider = LocationManager.NETWORK_PROVIDER;
+            Location location = lm.getLastKnownLocation(locationProvider);
+
+            longitude = location.getLongitude();
+            latitude = location.getLatitude();
         }
 
-        circleImage = (ImageView)findViewById(R.id.circle_image);
-        arrowImage = (ImageView)findViewById(R.id.arrow_image);
-        time = (TextView)findViewById(R.id.time);
+        circleImage = (ImageView) findViewById(R.id.circle_image);
+        arrowImage = (ImageView) findViewById(R.id.arrow_image);
+        time = (TextView) findViewById(R.id.time);
+        distanceText = (TextView) findViewById(R.id.distance);
 
-        if (value != "") {
-            startNav(value);
+
+
+        if (value != "" && value != null) {
+            try {
+                startNav(value);
+            }
+            catch(Exception e){
+                Log.i("blgh", "error", e);
+            }
         }
 
     }
 
     private void startNav(String value) throws Exception{
-        JSONObject json = (JSONObject) new JSONParser().parse(value);
-        JSONObject route = (JSONObject) json.get("routes");
-        JSONObject legs = (JSONObject) json.get("legs");
-        JSONArray steps = (JSONArray) json.get("steps");
-        //check that there is a path
-        //store turns and distances
+        JSONObject json = new JSONObject(value);
+        JSONArray routes =  json.getJSONArray("routes");
+        JSONArray legs = routes.getJSONObject(0).getJSONArray("legs");
+        JSONArray steps =  legs.getJSONObject(0).getJSONArray("steps");
+        directions = new int[steps.length()];
+        distances = new int[steps.length()];
+        for (int i = 0; i < steps.length(); ++i){
+            JSONObject obj = steps.getJSONObject(i);
+            JSONObject distance = obj.getJSONObject("distance");
+            distances[i] = distance.getInt("value");
+            if (steps.getJSONObject(i).has("maneuver")){
+                String maneuver = steps.getJSONObject(i).getString("maneuver");
+                if (maneuver.contains("left")){
+                    directions[i] = LEFT;
+                }
+                else if (maneuver.contains("right")){
+                    directions[i] = RIGHT;
+                }
+            }
+            else {
+                directions[i] = -1;
+            }
+        }
         //start timerTask
+        TimerTask task = new TimerTask() {
+            public void run() {
+                Location location = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                double newLongitude = location.getLongitude();
+                double newLatitude = location.getLatitude();
+                float[] result = new float[1];
+                location.distanceBetween(latitude, longitude, newLatitude, newLongitude, result);
+                distTraveled += result[0];
+                if (currentStep == (distances.length - 1) && distTraveled >= (distances[currentStep]-5)){
+                    timer.cancel();
+                    arrowImage.setImageDrawable(null);
+                }
+                else if (distTraveled >= (distances[currentStep]-5)){
+                    distTraveled = 0;
+                    currentStep++;
+                    distanceText.setText("");
+                    if (directions[currentStep] == LEFT){
+                        arrowImage.setImageDrawable(getDrawable(R.drawable.turnleft));
+                        distanceText.setText("Distance to Turn: " + (distances[currentStep] - distTraveled));
+                    }
+                    else if (directions[currentStep] == RIGHT){
+                        arrowImage.setImageDrawable(getDrawable(R.drawable.turnright));
+                        distanceText.setText("Distance to Turn: " + (distances[currentStep] - distTraveled));
+                    }
+                    else {
+                        arrowImage.setImageDrawable(getDrawable(R.drawable.turnstraight));
+                        distanceText.setText("Distance to Turn: " + (distances[currentStep] - distTraveled));
 
+                    }
+                }
+            }
+        };
+        timer = new Timer();
+        timer.scheduleAtFixedRate(task, 700, 700);
     }
 
     @Override
@@ -130,6 +210,16 @@ public class SensorActivity extends AppCompatActivity {
     {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
         mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
+        new CountDownTimer(4000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+
+            }
+
+            public void onFinish() {
+
+            }
+        }.start();
         mmSocket.connect();
         mmInputStream = mmSocket.getInputStream();
 
@@ -171,19 +261,18 @@ public class SensorActivity extends AppCompatActivity {
                                     final String data = new String(encodedBytes, "US-ASCII");
                                     readBufferPosition = 0;
 
-                                    handler.post(new Runnable()
-                                    {
+                                    handler.post(new Runnable() {
                                         public void run()
                                         {
 
-                                            if (Integer.parseInt(data) >= 0 ){
-                                                if (circleImage.getDrawable() == getDrawable(R.drawable.circlecaution)) {
+                                            if (Float.parseFloat(data) >= 0 ){
+                                                if (circleImage.getDrawable() != getDrawable(R.drawable.circlecaution)) {
                                                     circleImage.setImageDrawable(getDrawable(R.drawable.circlecaution));
                                                 }
                                                 time.setText("Estimated Time: " + data);
                                             }
 
-                                            else if (Integer.parseInt(data) == -1){
+                                            else if (Float.parseFloat(data) == -1){
                                                 circleImage.setImageDrawable(getDrawable(R.drawable.circlesafe));
                                                 time.setText("");
                                             }
