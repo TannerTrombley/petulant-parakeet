@@ -6,11 +6,15 @@ import android.os.Bundle;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity {
 
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private GoogleMap mMap; // Might be null if Google Play services APK is not available
+    private static LatLng Destination = null;
+    private Marker destination = null;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,13 +64,24 @@ public class MapsActivity extends FragmentActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Origin"));
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setTiltGesturesEnabled(true);
+        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng point){
 
-
+                if (destination != null)
+                    destination.remove();
+                destination = mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(point.latitude, point.longitude))
+                        .title("Destination"));
+                Destination = point;
+            }
+        });
+        if (Destination != null){
+            destination = mMap.addMarker(new MarkerOptions().position(new LatLng(Destination.latitude, Destination.longitude)).title("Destination"));
+        }
     }
-
-    public void onMapClick(LatLng latLng) {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Destination"));
-    }
-
 }
