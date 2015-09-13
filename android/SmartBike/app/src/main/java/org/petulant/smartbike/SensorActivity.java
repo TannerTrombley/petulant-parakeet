@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -22,6 +23,9 @@ import java.util.UUID;
 
 public class SensorActivity extends AppCompatActivity {
 
+    ImageView circleImage;
+    ImageView arrowImage;
+    TextView time;
     BluetoothAdapter mBluetoothAdapter;
     BluetoothSocket mmSocket;
     BluetoothDevice mmDevice;
@@ -30,7 +34,6 @@ public class SensorActivity extends AppCompatActivity {
     Thread workerThread;
     byte[] readBuffer;
     int readBufferPosition;
-    int counter;
     volatile boolean stopWorker;
 
     @Override
@@ -38,6 +41,11 @@ public class SensorActivity extends AppCompatActivity {
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sensor);
+
+        circleImage = (ImageView)findViewById(R.id.circle_image);
+        arrowImage = (ImageView)findViewById(R.id.arrow_image);
+        time = (TextView)findViewById(R.id.time);
+
     }
 
     @Override
@@ -71,7 +79,7 @@ public class SensorActivity extends AppCompatActivity {
         {
         }
 
-        if(!mBluetoothAdapter.isEnabled())
+        else if(!mBluetoothAdapter.isEnabled())
         {
             Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBluetooth, 0);
@@ -144,6 +152,19 @@ public class SensorActivity extends AppCompatActivity {
                                     {
                                         public void run()
                                         {
+                                            /*
+                                            if (Integer.parseInt(data) >= 0 ){
+                                                if (circleImage.getDrawable() == WARNING) {
+                                                    //circleImage.setImageDrawable(WARNING);
+                                                }
+                                                //time.setText("Estimated Time: " + data);
+                                            }
+
+                                            else if (Integer.parseInt(data) == -1){
+                                                circleImage.setImageDrawable(SAFE);
+                                                time.setText("");
+                                            }
+                                            */
                                         }
                                     });
                                 }
