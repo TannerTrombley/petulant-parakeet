@@ -7,17 +7,12 @@ import android.content.Intent;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,7 +24,6 @@ public class SensorActivity extends AppCompatActivity {
     BluetoothAdapter mBluetoothAdapter;
     BluetoothSocket mmSocket;
     BluetoothDevice mmDevice;
-    OutputStream mmOutputStream;
     InputStream mmInputStream;
     Thread workerThread;
     byte[] readBuffer;
@@ -56,7 +50,9 @@ public class SensorActivity extends AppCompatActivity {
             findBT();
             openBT();
         }
-        catch (IOException ex) { }
+        catch (IOException ex) {
+        Log.i("i", "i");
+        }
     }
 
     @Override
@@ -107,7 +103,6 @@ public class SensorActivity extends AppCompatActivity {
         UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //Standard SerialPortService ID
         mmSocket = mmDevice.createRfcommSocketToServiceRecord(uuid);
         mmSocket.connect();
-        mmOutputStream = mmSocket.getOutputStream();
         mmInputStream = mmSocket.getInputStream();
 
         beginListenForData();
@@ -165,6 +160,7 @@ public class SensorActivity extends AppCompatActivity {
                                                 time.setText("");
                                             }
                                             */
+                                            time.setText("Estimated Time: " + data);
                                         }
                                     });
                                 }
@@ -190,20 +186,11 @@ public class SensorActivity extends AppCompatActivity {
 
 
 
-    void sendData() throws IOException
-    {
-        String msg = "";
-        mmOutputStream.write(msg.getBytes());
-    }
-
-
-
 
 
     void closeBT() throws IOException
     {
         stopWorker = true;
-        mmOutputStream.close();
         mmInputStream.close();
         mmSocket.close();
     }
