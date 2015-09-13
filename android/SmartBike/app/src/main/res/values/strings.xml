@@ -7,6 +7,8 @@
     <string name="start_sensor_button">Start</string>
     <string name="title_activity_maps">Map</string>
     <string name="open_map_button">Open Map</string>
+    <string name="map_start_button">Start</string>
+
 
 
 </resources>
