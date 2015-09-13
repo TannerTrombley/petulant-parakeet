@@ -6,19 +6,17 @@
 
 //CONSTANTS
 short CONSECUTIVE_READINGS = 5;
-short DANGER_THRESHOLD = 3; // m/s
+//short DANGER_THRESHOLD = 3; // m/s
 
 LIDARLite lidar;
-StaticJsonBuffer<200> jsonBuffer;
-JsonObject& root = jsonBuffer.createObject();
 
-void printToBt(int num)
-{
-  root["Measurement"] = "Distance";
-  root["cm"] = num;
-  root.prettyPrintTo(Serial);
-  
-}
+//void printToBt(int num)
+//{
+//  root["Measurement"] = "Distance";
+//  root["cm"] = num;
+//  root.prettyPrintTo(Serial);
+//  
+//}
 
 
 //confirm that there is no more danger behind the cyclist
@@ -42,15 +40,42 @@ bool confirmSafety()
 //-------
 //return true if there is danger
 //return false if it was a false danger indicator
+bool confirmDanger(float &avg)
 {
+   avg = 1;
+   float total = 0;
    for (int i = 0; i < CONSECUTIVE_READINGS; ++i)
    {
     //check if safe
-    if (lidar.velocity() <= 0)
+    int reading = lidar.velocity();
+    total += reading;
+    if (reading <= 0)
       return false;
    }
    //if we get here there is danger, return true
+   //set the avg velocity as well
+   avg = total / CONSECUTIVE_READINGS;
    return true;
+}
+
+void sendDangerMessage(float velocity, float distance)
+{
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+
+  root["status"] = "danger";
+  root["velocity"] = velocity;
+  root["distance"] = distance;
+  root.printTo(Serial);
+}
+
+void sendSafeMessage()
+{
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+
+  root["status"] = "safe";
+  root.printTo(Serial);
 }
 
 
@@ -74,18 +99,29 @@ void setup()
 bool inDanger = false;
 void loop()
 {
+  float avgVel;
   bool prevState = inDanger;
   int current = lidar.velocity();
   if (inDanger && current < 0)
     inDanger = confirmSafety();
   else if (!inDanger && current >= 0)
-    inDanger = confirmDanger();
+    inDanger = confirmDanger(avgVel);
   //No other scenrio should cause a change in state
 
   //TODO send something based on the current  vs prevState
-  
-  
-  //printToBt(lidar.distance());
-  //delay(500); 
+  if (prevState != inDanger)
+  {
+    if (inDanger)
+    {
+      float total = 0;
+      for (int i = 0; i < CONSECUTIVE_READINGS; ++i)
+        total += lidar.distance();
+      sendDangerMessage(avgVel, total/CONSECUTIVE_READINGS); 
+    }
+    else
+    {
+      sendSafeMessage();
+    }
+  } 
 }
 
